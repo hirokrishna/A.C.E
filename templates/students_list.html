@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Students List - A.C.E{% endblock %}
+
+{% block content %}
+    <h2>Students List</h2>
+
+    <div style="margin-bottom: 15px;">
+        <a href="{{ url_for('student.add_student') }}" class="btn">+ Add Student</a>
+        <a href="{{ url_for('academic.bulk_import') }}" class="btn btn-secondary">Bulk Import (CSV)</a>
+    </div>
+
+    <!-- Search and Filter Form -->
+    <form method="GET" action="{{ url_for('student.student_list') }}" style="margin-bottom: 20px; background-color: #f9f9f9; padding: 12px; border: 1px solid #e0e0e0;">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <div>
+                <label for="search" style="font-weight: bold; font-size: 13px;">Search:</label>
+                <input type="text" id="search" name="search" value="{{ search or '' }}" placeholder="Name or Roll No" style="padding: 4px; width: 170px;">
+            </div>
+
+            <div>
+                <label for="branch" style="font-weight: bold; font-size: 13px;">Branch:</label>
+                <select id="branch" name="branch" style="padding: 4px;">
+                    <option value="">All Branches</option>
+                    <option value="IT" {% if branch == 'IT' %}selected{% endif %}>IT</option>
+                    <option value="CSE" {% if branch == 'CSE' %}selected{% endif %}>CSE</option>
+                    <option value="ECE" {% if branch == 'ECE' %}selected{% endif %}>ECE</option>
+                    <option value="MECH" {% if branch == 'MECH' %}selected{% endif %}>MECH</option>
+                    <option value="CIVIL" {% if branch == 'CIVIL' %}selected{% endif %}>CIVIL</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="semester" style="font-weight: bold; font-size: 13px;">Semester:</label>
+                <select id="semester" name="semester" style="padding: 4px;">
+                    <option value="">All Semesters</option>
+                    {% for s in range(1, 9) %}
+                        <option value="{{ s }}" {% if semester == s|string %}selected{% endif %}>Semester {{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <button type="submit" class="btn">Filter</button>
+                <a href="{{ url_for('student.student_list') }}" class="btn btn-secondary">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Students Table with Sorting -->
+    <table>
+        <thead>
+            <tr>
+                <th>
+                    <a href="{{ url_for('student.student_list', sort='roll_no', order='desc' if sort=='roll_no' and order=='asc' else 'asc', search=search, branch=branch, semester=semester) }}">
+                        Roll No {% if sort=='roll_no' %}{{ '▲' if order=='asc' else '▼' }}{% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a href="{{ url_for('student.student_list', sort='name', order='desc' if sort=='name' and order=='asc' else 'asc', search=search, branch=branch, semester=semester) }}">
+                        Name {% if sort=='name' %}{{ '▲' if order=='asc' else '▼' }}{% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a href="{{ url_for('student.student_list', sort='branch', order='desc' if sort=='branch' and order=='asc' else 'asc', search=search, branch=branch, semester=semester) }}">
+                        Branch {% if sort=='branch' %}{{ '▲' if order=='asc' else '▼' }}{% endif %}
+                    </a>
+                </th>
+                <th>
+                    <a href="{{ url_for('student.student_list', sort='semester', order='desc' if sort=='semester' and order=='asc' else 'asc', search=search, branch=branch, semester=semester) }}">
+                        Semester {% if sort=='semester' %}{{ '▲' if order=='asc' else '▼' }}{% endif %}
+                    </a>
+                </th>
+                <th>Section</th>
+                <th>Mentor</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in students %}
+                <tr>
+                    <td><strong>{{ s.roll_no }}</strong></td>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.branch }}</td>
+                    <td>Sem {{ s.semester }}</td>
+                    <td>{{ s.section }}</td>
+                    <td>{{ s.mentor.name if s.mentor else '-' }}</td>
+                    <td>
+                        <a href="{{ url_for('student.student_detail', student_id=s.id) }}" class="btn" style="padding: 2px 7px; font-size: 12px;">View</a>
+                        <a href="{{ url_for('student.edit_student', student_id=s.id) }}" class="btn btn-secondary" style="padding: 2px 7px; font-size: 12px;">Edit</a>
+                        <form method="POST" action="{{ url_for('student.delete_student', student_id=s.id) }}" style="display:inline;" onsubmit="return confirm('Delete student {{ s.name }} ({{ s.roll_no }})?');">
+                            <button type="submit" class="btn btn-danger" style="padding: 2px 7px; font-size: 12px;">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="7">No records found</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            Page {{ pagination.page }} of {{ pagination.pages or 1 }} (Total {{ pagination.total }} students)
+        </div>
+        <div class="pagination-links">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('student.student_list', page=pagination.prev_num, search=search, branch=branch, semester=semester, sort=sort, order=order) }}" class="btn btn-secondary">&laquo; Previous</a>
+            {% endif %}
+            {% for p in range(1, (pagination.pages or 1) + 1) %}
+                {% if p == pagination.page %}
+                    <span class="btn btn-secondary" style="background-color: #2c3e50;">{{ p }}</span>
+                {% elif p <= 3 or p >= pagination.pages - 1 or (p >= pagination.page - 1 and p <= pagination.page + 1) %}
+                    <a href="{{ url_for('student.student_list', page=p, search=search, branch=branch, semester=semester, sort=sort, order=order) }}" class="btn btn-secondary">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if pagination.has_next %}
+                <a href="{{ url_for('student.student_list', page=pagination.next_num, search=search, branch=branch, semester=semester, sort=sort, order=order) }}" class="btn btn-secondary">Next &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,245 @@
+/* Basic styles for A.C.E */
+body {
+    font-family: Arial, Verdana, sans-serif;
+    background-color: #f2f2f2;
+    margin: 0;
+    padding: 0;
+    color: #333333;
+}
+
+/* Navigation bar */
+.navbar {
+    background-color: #2c3e50;
+    padding: 10px 15px;
+    color: #ffffff;
+}
+
+.navbar .nav-container {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar .brand {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.navbar .nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar .nav-links a {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 13px;
+    padding: 2px 4px;
+}
+
+.navbar .nav-links a:hover {
+    text-decoration: underline;
+}
+
+/* Main page container */
+.container {
+    max-width: 960px;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+
+/* White content box */
+.box {
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+h2 {
+    margin-top: 0;
+    color: #2c3e50;
+    border-bottom: 1px solid #eeeeee;
+    padding-bottom: 8px;
+}
+
+h3 {
+    margin-top: 15px;
+    color: #333333;
+}
+
+/* Alerts */
+.alert {
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border: 1px solid #cccccc;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+.alert-danger, .alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+table, th, td {
+    border: 1px solid #cccccc;
+}
+
+th {
+    background-color: #f9f9f9;
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 13px;
+}
+
+td {
+    padding: 7px 10px;
+    font-size: 13px;
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+    width: 100%;
+    max-width: 400px;
+    padding: 6px 8px;
+    border: 1px solid #cccccc;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    background-color: #3366cc;
+    color: #ffffff;
+    padding: 5px 12px;
+    text-decoration: none;
+    border: 1px solid #2952a3;
+    font-size: 13px;
+    cursor: pointer;
+    margin-right: 4px;
+    margin-bottom: 4px;
+}
+
+.btn:hover {
+    background-color: #2952a3;
+}
+
+.btn-secondary {
+    background-color: #777777;
+    border-color: #666666;
+}
+
+.btn-danger {
+    background-color: #cc3333;
+    border-color: #a32929;
+}
+
+/* Risk indicators */
+.risk-high {
+    color: red;
+    font-weight: bold;
+}
+
+.risk-medium {
+    color: orange;
+    font-weight: bold;
+}
+
+.risk-low {
+    color: green;
+    font-weight: bold;
+}
+
+/* Summary stats boxes */
+.stats-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    flex: 1;
+    min-width: 130px;
+    background-color: #fafafa;
+    border: 1px solid #dddddd;
+    padding: 12px;
+    text-align: center;
+}
+
+.stat-card .stat-number {
+    font-size: 22px;
+    font-weight: bold;
+    margin-top: 4px;
+}
+
+.badge {
+    background-color: #cc3333;
+    color: #ffffff;
+    padding: 1px 5px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    color: #888888;
+    font-size: 12px;
+    margin: 30px 0 20px 0;
+}
+
+/* Print rule hiding nav, buttons, footer */
+@media print {
+    .navbar, .btn, .footer, .no-print {
+        display: none !important;
+    }
+    body {
+        background-color: #ffffff;
+    }
+    .container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .box {
+        border: none;
+        padding: 0;
+    }
+}

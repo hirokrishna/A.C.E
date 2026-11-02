@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Student' if is_edit else 'Add Student' }} - A.C.E{% endblock %}
+
+{% block content %}
+    <h2>{{ 'Edit Student Details' if is_edit else 'Add New Student' }}</h2>
+
+    <form method="POST">
+        {% if not is_edit %}
+            <div class="form-group">
+                <label for="roll_no">Roll Number:</label>
+                <input type="text" id="roll_no" name="roll_no" value="{{ roll_no or '' }}" placeholder="e.g. IT2026031" required>
+            </div>
+        {% else %}
+            <div class="form-group">
+                <label>Roll Number:</label>
+                <input type="text" value="{{ student.roll_no }}" disabled style="background-color: #eeeeee;">
+            </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label for="name">Full Name:</label>
+            <input type="text" id="name" name="name" value="{{ student.name if is_edit else (name or '') }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email Address:</label>
+            <input type="email" id="email" name="email" value="{{ student.email if is_edit else (email or '') }}">
+        </div>
+
+        <div class="form-group">
+            <label for="phone">Phone Number:</label>
+            <input type="text" id="phone" name="phone" value="{{ student.phone if is_edit else (phone or '') }}" placeholder="e.g. 9876543210" maxlength="15">
+        </div>
+
+        <div class="form-group">
+            <label for="branch">Branch:</label>
+            {% set current_branch = student.branch if is_edit else (branch or 'IT') %}
+            <select id="branch" name="branch" required>
+                <option value="IT" {% if current_branch == 'IT' %}selected{% endif %}>Information Technology</option>
+                <option value="CSE" {% if current_branch == 'CSE' %}selected{% endif %}>Computer Science Engineering</option>
+                <option value="ECE" {% if current_branch == 'ECE' %}selected{% endif %}>Electronics & Communication</option>
+                <option value="MECH" {% if current_branch == 'MECH' %}selected{% endif %}>Mechanical Engineering</option>
+                <option value="CIVIL" {% if current_branch == 'CIVIL' %}selected{% endif %}>Civil Engineering</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="semester">Semester:</label>
+            {% set current_sem = student.semester if is_edit else (semester or 5) %}
+            <select id="semester" name="semester" required>
+                {% for s in range(1, 9) %}
+                    <option value="{{ s }}" {% if current_sem|string == s|string %}selected{% endif %}>Semester {{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="section">Section:</label>
+            <input type="text" id="section" name="section" value="{{ student.section if is_edit else (section or 'A') }}" maxlength="5">
+        </div>
+
+        <div class="form-group">
+            <label for="gender">Gender:</label>
+            {% set current_gender = student.gender if is_edit else (gender or 'Male') %}
+            <select id="gender" name="gender">
+                <option value="Male" {% if current_gender == 'Male' %}selected{% endif %}>Male</option>
+                <option value="Female" {% if current_gender == 'Female' %}selected{% endif %}>Female</option>
+                <option value="Other" {% if current_gender == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+        </div>
+
+        {% if session.get('role') == 'admin' %}
+            <div class="form-group">
+                <label for="mentor_id">Assigned Faculty Mentor:</label>
+                {% set cur_mentor = student.mentor_id if is_edit else (mentor_id|int if mentor_id else None) %}
+                <select id="mentor_id" name="mentor_id">
+                    <option value="">-- No Mentor Assigned --</option>
+                    {% for t in teachers %}
+                        <option value="{{ t.id }}" {% if cur_mentor == t.id %}selected{% endif %}>{{ t.name }} ({{ t.email }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% endif %}
+
+        <div class="form-group">
+            <button type="submit" class="btn">Save</button>
+            <a href="{{ url_for('student.student_list') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+{% endblock %}

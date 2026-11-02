@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Academic Interventions - High Risk Students{% endblock %}
+
+{% block content %}
+    <h2>Academic Interventions List (High Risk Students)</h2>
+    <p>Students flagged with High Risk. Review their counseling progress and log faculty remarks and action plans.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Roll No</th>
+                <th>Student Name</th>
+                <th>Branch / Sem</th>
+                <th>Attendance %</th>
+                <th>Internal Marks %</th>
+                <th>Pass Prob</th>
+                <th>Pred Score</th>
+                <th>Mentor</th>
+                <th>Latest Remark Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in records %}
+                {% set s = item.student %}
+                {% set p = item.prediction %}
+                {% set r = item.remark %}
+                <tr>
+                    <td><strong>{{ s.roll_no }}</strong></td>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.branch }} - Sem {{ s.semester }}</td>
+                    <td>
+                        <span class="risk-high">{{ item.attendance_pct }}%</span>
+                    </td>
+                    <td>{{ item.internal_pct }}%</td>
+                    <td>{{ (p.pass_probability * 100)|round(1) }}%</td>
+                    <td>{{ p.predicted_percentage ~ '%' if p.predicted_percentage is not none else '-' }}</td>
+                    <td>{{ s.mentor.name if s.mentor else 'Unassigned' }}</td>
+                    <td>
+                        {% if r %}
+                            <span class="badge" style="background-color: {% if r.status == 'Resolved' %}#28a745{% elif r.status == 'Improving' %}#17a2b8{% elif r.status == 'Counselled' %}#ffc107; color: #000;{% else %}#dc3545{% endif %};">
+                                {{ r.status }}
+                            </span>
+                        {% else %}
+                            <span class="badge" style="background-color: #6c757d;">Not Contacted</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('student.student_detail', student_id=s.id) }}" class="btn" style="padding: 2px 7px; font-size: 12px;">View & Add Remark</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="10">No students are currently classified as High Risk!</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+

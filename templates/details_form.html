@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Extra Academic Details - {{ student.name }}{% endblock %}
+
+{% block content %}
+    <h2>Academic Profile & Study Habits: {{ student.name }} ({{ student.roll_no }})</h2>
+    <p>These values are required to run machine learning performance predictions.</p>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="prev_percentage">Previous Semester / School Percentage (%):</label>
+            <input type="number" step="0.1" min="0" max="100" id="prev_percentage" name="prev_percentage" value="{{ details.prev_percentage if details else '65.0' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="study_hours">Self Study Hours Per Week (0 - 80 hours):</label>
+            <input type="number" step="0.5" min="0" max="80" id="study_hours" name="study_hours" value="{{ details.study_hours if details else '10.0' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="assignment_pct">Assignment Completion Rate (%):</label>
+            <input type="number" step="0.1" min="0" max="100" id="assignment_pct" name="assignment_pct" value="{{ details.assignment_pct if details else '75.0' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="backlogs">Number of Active Backlogs / Arrears:</label>
+            <input type="number" min="0" max="20" id="backlogs" name="backlogs" value="{{ details.backlogs if details else '0' }}" required>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn">Save Details</button>
+            <a href="{{ url_for('student.student_detail', student_id=student.id) }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+{% endblock %}
+

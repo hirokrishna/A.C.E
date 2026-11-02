@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Model Management & Performance - Admin{% endblock %}
+
+{% block extra_head %}
+    <!-- Chart.js via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+    <h2>Machine Learning Model Management & Evaluation</h2>
+    <p>Compare trained classification and regression algorithms, inspect confusion matrices and feature importance, or retrain models using new datasets.</p>
+
+    <!-- Active Production Models -->
+    <h3>Active Production Models</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Task Type</th>
+                <th>Selected Model</th>
+                <th>Primary Metric</th>
+                <th>Secondary Metric</th>
+                <th>Training Size</th>
+                <th>Trained At</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Classification (Pass/Fail)</strong></td>
+                <td><strong style="color: #28a745;">{{ active_clf.model_name if active_clf else 'N/A' }}</strong></td>
+                <td>Accuracy: <strong>{{ ((active_clf.accuracy or 0) * 100)|round(2) }}%</strong></td>
+                <td>F1 Score: <strong>{{ ((active_clf.f1_score or 0) * 100)|round(2) }}%</strong></td>
+                <td>{{ active_clf.dataset_rows if active_clf else 0 }} rows</td>
+                <td style="font-size: 12px;">{{ active_clf.trained_at.strftime('%Y-%m-%d %H:%M') if active_clf else '-' }}</td>
+            </tr>
+            <tr>
+                <td><strong>Regression (Final Score %)</strong></td>
+                <td><strong style="color: #28a745;">{{ active_reg.model_name if active_reg else 'N/A' }}</strong></td>
+                <td>R&sup2; Score: <strong>{{ (active_reg.r2_score or 0)|round(4) }}</strong></td>
+                <td>MAE: <strong>&plusmn;{{ (active_reg.mae or 0)|round(2) }}%</strong></td>
+                <td>{{ active_reg.dataset_rows if active_reg else 0 }} rows</td>
+                <td style="font-size: 12px;">{{ active_reg.trained_at.strftime('%Y-%m-%d %H:%M') if active_reg else '-' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Comparison Table for All Evaluated Classifiers -->
+    <h3>All Compared Classification Algorithms (Pass / Fail)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Algorithm Name</th>
+                <th>Accuracy</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>F1 Score</th>
+                <th>Production Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in classifiers %}
+                <tr style="{% if c.is_active %}background-color: #f0f7ff; font-weight: bold;{% endif %}">
+                    <td>{{ c.model_name }}</td>
+                    <td>{{ ((c.accuracy or 0) * 100)|round(2) }}%</td>
+                    <td>{{ ((c.precision_score or 0) * 100)|round(2) }}%</td>
+                    <td>{{ ((c.recall_score or 0) * 100)|round(2) }}%</td>
+                    <td>{{ ((c.f1_score or 0) * 100)|round(2) }}%</td>
+                    <td>
+                        {% if c.is_active %}
+                            <span class="badge" style="background-color: #28a745;">ACTIVE</span>
+                        {% else %}
+                            <span style="color: #888;">Evaluated</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6">No classifier history found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Comparison Table for All Evaluated Regressors -->
+    <h3>All Compared Regression Algorithms (Score Prediction)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Algorithm Name</th>
+                <th>R&sup2; Score</th>
+                <th>Mean Absolute Error (MAE)</th>
+                <th>Production Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in regressors %}
+                <tr style="{% if r.is_active %}background-color: #f0f7ff; font-weight: bold;{% endif %}">
+                    <td>{{ r.model_name }}</td>
+                    <td>{{ (r.r2_score or 0)|round(4) }}</td>
+                    <td>&plusmn;{{ (r.mae or 0)|round(2) }}%</td>
+                    <td>
+                        {% if r.is_active %}
+                            <span class="badge" style="background-color: #28a745;">ACTIVE</span>
+                        {% else %}
+                            <span style="color: #888;">Evaluated</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="4">No regressor history found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Confusion Matrix & Feature Importance Charts -->
+    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 25px; margin-bottom: 25px;">
+        <!-- 2x2 Confusion Matrix -->
+        <div style="flex: 1; min-width: 300px; background-color: #fafafa; border: 1px solid #cccccc; padding: 15px;">
+            <h4 style="margin-top: 0; text-align: center;">Confusion Matrix (Test Evaluation Set)</h4>
+            {% if cm %}
+                <table style="text-align: center; margin: 10px auto; max-width: 260px;">
+                    <tr>
+                        <th></th>
+                        <th>Predicted Fail</th>
+                        <th>Predicted Pass</th>
+                    </tr>
+                    <tr>
+                        <th>Actual Fail</th>
+                        <td style="background-color: #e2f0d9; font-weight: bold;">{{ cm[0][0] }} (TN)</td>
+                        <td style="background-color: #fce4d6;">{{ cm[0][1] }} (FP)</td>
+                    </tr>
+                    <tr>
+                        <th>Actual Pass</th>
+                        <td style="background-color: #fce4d6;">{{ cm[1][0] }} (FN)</td>
+                        <td style="background-color: #e2f0d9; font-weight: bold;">{{ cm[1][1] }} (TP)</td>
+                    </tr>
+                </table>
+                <p style="text-align: center; font-size: 11px; color: #666;">High True Positives and True Negatives show robust classification.</p>
+            {% else %}
+                <p style="text-align: center; color: #888;">Confusion matrix data not available.</p>
+            {% endif %}
+        </div>
+
+        <!-- Feature Importance Bar Chart -->
+        <div style="flex: 1; min-width: 320px; background-color: #fafafa; border: 1px solid #cccccc; padding: 15px;">
+            <h4 style="margin-top: 0; text-align: center;">Random Forest Feature Importance</h4>
+            <canvas id="importanceChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Retrain Model Section -->
+    <h3 style="margin-top: 30px;">Retrain Production Models</h3>
+    <div style="background-color: #f9f9f9; padding: 15px; border: 1px solid #e0e0e0; max-width: 600px;">
+        <p style="font-size: 13px; color: #555555;">
+            Retrain models using the existing dataset or upload an updated CSV. The file must include columns:
+            <br><code>attendance_pct, internal_marks_pct, prev_percentage, study_hours, assignment_pct, backlogs, final_percentage, result</code>
+        </p>
+
+        <form method="POST" action="{{ url_for('admin.retrain_model') }}" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="dataset_file">Upload Updated Dataset (Optional CSV):</label>
+                <input type="file" id="dataset_file" name="dataset_file" accept=".csv">
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+                <button type="submit" class="btn" onclick="return confirm('Retrain models now? This will compare all classifiers and regressors and activate the best.');">
+                    Retrain Models
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var featCanvas = document.getElementById("importanceChart");
+    {% if features %}
+        var featLabels = {{ features.keys()|list|tojson }};
+        var featValues = {{ features.values()|list|tojson }};
+
+        if (featCanvas) {
+            new Chart(featCanvas, {
+                type: "bar",
+                data: {
+                    labels: featLabels,
+                    datasets: [{
+                        label: "Importance Weight",
+                        data: featValues,
+                        backgroundColor: "#3366cc"
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+    {% endif %}
+});
+</script>
+{% endblock %}

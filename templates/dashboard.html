@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - A.C.E{% endblock %}
+
+{% block extra_head %}
+    <!-- Chart.js via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+    <h2>Teacher / Admin Dashboard</h2>
+
+    <!-- Summary Count Boxes (Row 1) -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div>Total Students</div>
+            <div class="stat-number">{{ total_students }}</div>
+        </div>
+        <div class="stat-card">
+            <div>High Risk</div>
+            <div class="stat-number risk-high">{{ high_risk_count }}</div>
+        </div>
+        <div class="stat-card">
+            <div>Medium Risk</div>
+            <div class="stat-number risk-medium">{{ medium_risk_count }}</div>
+        </div>
+        <div class="stat-card">
+            <div>Low Risk</div>
+            <div class="stat-number risk-low">{{ low_risk_count }}</div>
+        </div>
+    </div>
+
+    <!-- Summary Count Boxes (Row 2 - New Features) -->
+    <div class="stats-grid" style="margin-top: -8px;">
+        <div class="stat-card">
+            <div>Attendance Shortage (&lt;75%)</div>
+            <div class="stat-number" style="color: #dc3545;">
+                <a href="{{ url_for('academic.attendance_shortage') }}" style="text-decoration: none; color: inherit;">{{ shortage_count }}</a>
+            </div>
+        </div>
+        {% if session.get('role') == 'admin' %}
+            <div class="stat-card">
+                <div>Pending Password Requests</div>
+                <div class="stat-number" style="color: #ffc107;">
+                    <a href="{{ url_for('admin.user_list') }}" style="text-decoration: none; color: inherit;">{{ pending_pw_count }}</a>
+                </div>
+            </div>
+        {% endif %}
+        <div class="stat-card">
+            <div>Unread Notifications</div>
+            <div class="stat-number" style="color: #3366cc;">
+                <a href="{{ url_for('auth.notification_list') }}" style="text-decoration: none; color: inherit;">{{ unread_notifs }}</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick action links -->
+    <div style="margin-bottom: 25px;">
+        <a href="{{ url_for('dashboard.risk_list') }}" class="btn">View Risk List</a>
+        <a href="{{ url_for('student.intervention_list') }}" class="btn">Interventions</a>
+        <a href="{{ url_for('student.class_ranking') }}" class="btn btn-secondary">Rankings</a>
+        <a href="{{ url_for('academic.attendance_shortage') }}" class="btn btn-secondary">Shortage List</a>
+        <a href="{{ url_for('dashboard.announcements') }}" class="btn btn-secondary">Announcements</a>
+        <a href="{{ url_for('dashboard.export_csv') }}" class="btn btn-secondary">Export CSV</a>
+    </div>
+
+    <!-- Latest 3 Announcements Section -->
+    {% if recent_announcements %}
+        <div style="background-color: #fcfcfc; border: 1px solid #cccccc; padding: 15px; margin-bottom: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin: 0;">Latest Department Announcements</h3>
+                <a href="{{ url_for('dashboard.announcements') }}" style="font-size: 12px;">View All / Post &raquo;</a>
+            </div>
+            {% for a in recent_announcements %}
+                <div style="border-bottom: 1px dashed #dddddd; padding-bottom: 8px; margin-bottom: 8px;">
+                    <strong>{{ a.title }}</strong> - <span style="font-size: 13px;">{{ a.message }}</span>
+                    <div style="font-size: 11px; color: #888888;">
+                        Target: {{ a.target_branch or 'All' }} | Posted: {{ a.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Charts Section -->
+    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px;">
+        <!-- Pie Chart -->
+        <div style="flex: 1; min-width: 280px; background-color: #fafafa; border: 1px solid #dddddd; padding: 15px;">
+            <h3 style="margin-top: 0; text-align: center;">Predicted Pass vs Fail</h3>
+            <div style="max-width: 280px; margin: 0 auto;">
+                <canvas id="passFailChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Bar Chart -->
+        <div style="flex: 1; min-width: 280px; background-color: #fafafa; border: 1px solid #dddddd; padding: 15px;">
+            <h3 style="margin-top: 0; text-align: center;">Students per Risk Category</h3>
+            <div>
+                <canvas id="riskChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top 5 High Risk Students Table -->
+    <h3>Top 5 High Risk Students</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Roll No</th>
+                <th>Name</th>
+                <th>Attendance</th>
+                <th>Internal Marks</th>
+                <th>Pass Probability</th>
+                <th>Risk Level</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in top_5_high_risk %}
+                {% set s = item.student %}
+                {% set p = item.prediction %}
+                <tr>
+                    <td><strong>{{ s.roll_no }}</strong></td>
+                    <td>{{ s.name }}</td>
+                    <td>{{ item.attendance_pct }}%</td>
+                    <td>{{ item.internal_pct }}%</td>
+                    <td>{{ (p.pass_probability * 100)|round(1) }}%</td>
+                    <td><span class="risk-high">HIGH</span></td>
+                    <td>
+                        <a href="{{ url_for('student.student_detail', student_id=s.id) }}" class="btn" style="padding: 2px 7px; font-size: 12px;">View Record</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="7">No high risk students found or class predictions have not been run yet.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}

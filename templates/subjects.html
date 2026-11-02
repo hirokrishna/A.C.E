@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Subjects - Admin{% endblock %}
+
+{% block content %}
+    <h2>Manage Subjects</h2>
+
+    <!-- Add Subject Form -->
+    <div style="background-color: #f9f9f9; padding: 15px; border: 1px solid #e0e0e0; margin-bottom: 20px;">
+        <h3>Add New Subject</h3>
+        <form method="POST" action="{{ url_for('academic.subject_list') }}">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <div>
+                    <label for="code" style="display:block; font-weight: bold; font-size: 13px;">Subject Code:</label>
+                    <input type="text" id="code" name="code" placeholder="e.g. IT507" required style="padding: 5px; width: 120px;">
+                </div>
+                <div>
+                    <label for="name" style="display:block; font-weight: bold; font-size: 13px;">Subject Name:</label>
+                    <input type="text" id="name" name="name" placeholder="e.g. Cyber Security" required style="padding: 5px; width: 220px;">
+                </div>
+                <div>
+                    <label for="semester" style="display:block; font-weight: bold; font-size: 13px;">Semester:</label>
+                    <select id="semester" name="semester" style="padding: 5px;">
+                        {% for s in range(1, 9) %}
+                            <option value="{{ s }}" {% if s == 5 %}selected{% endif %}>Semester {{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="branch" style="display:block; font-weight: bold; font-size: 13px;">Branch:</label>
+                    <input type="text" id="branch" name="branch" value="IT" required style="padding: 5px; width: 80px;">
+                </div>
+                <div style="align-self: flex-end;">
+                    <button type="submit" class="btn">Add Subject</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Subjects Table -->
+    <table>
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Subject Name</th>
+                <th>Semester</th>
+                <th>Branch</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in subjects %}
+                <tr>
+                    <td><strong>{{ sub.code }}</strong></td>
+                    <td>{{ sub.name }}</td>
+                    <td>Semester {{ sub.semester }}</td>
+                    <td>{{ sub.branch }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('academic.delete_subject', subject_id=sub.id) }}" style="display:inline;" onsubmit="return confirm('Delete subject {{ sub.code }}? This may affect existing marks and attendance.');">
+                            <button type="submit" class="btn btn-danger" style="padding: 2px 7px; font-size: 12px;">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="5">No subjects found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+

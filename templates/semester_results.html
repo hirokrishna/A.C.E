@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Past Semester Results - {{ student.name }}{% endblock %}
+
+{% block content %}
+    <h2>Past Semester Results: {{ student.name }} ({{ student.roll_no }})</h2>
+    <p>Record or update SGPA (0.0 to 10.0) and active backlogs count for Semesters 1 through 8.</p>
+
+    <form method="POST">
+        <table>
+            <thead>
+                <tr>
+                    <th>Semester</th>
+                    <th>SGPA (0.0 - 10.0)</th>
+                    <th>Backlogs Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sem in range(1, 9) %}
+                    {% set r = sem_dict.get(sem, {}) %}
+                    <tr>
+                        <td><strong>Semester {{ sem }}</strong></td>
+                        <td>
+                            <input type="number" step="0.01" min="0" max="10" name="sgpa_{{ sem }}" value="{{ r.get('sgpa', '') }}" placeholder="e.g. 7.85" style="width: 100px; padding: 4px;">
+                        </td>
+                        <td>
+                            <input type="number" min="0" max="20" name="backlogs_{{ sem }}" value="{{ r.get('backlogs', '') }}" placeholder="0" style="width: 80px; padding: 4px;">
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="margin-top: 15px;">
+            <button type="submit" class="btn">Save Semester Results</button>
+            <a href="{{ url_for('student.student_detail', student_id=student.id) }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+{% endblock %}
+

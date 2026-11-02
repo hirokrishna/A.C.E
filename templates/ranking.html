@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Class Academic Ranking - A.C.E{% endblock %}
+
+{% block content %}
+    <h2>Class Academic Ranking</h2>
+    <p>Rankings calculated by internal exam performance within the same department and semester.</p>
+
+    <!-- Filter Form -->
+    <form method="GET" action="{{ url_for('student.class_ranking') }}" style="margin-bottom: 20px; background-color: #f9f9f9; padding: 12px; border: 1px solid #e0e0e0;">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <div>
+                <label for="branch" style="font-weight: bold; font-size: 13px;">Branch:</label>
+                <select id="branch" name="branch" style="padding: 4px;">
+                    <option value="IT" {% if branch == 'IT' %}selected{% endif %}>IT</option>
+                    <option value="CSE" {% if branch == 'CSE' %}selected{% endif %}>CSE</option>
+                    <option value="ECE" {% if branch == 'ECE' %}selected{% endif %}>ECE</option>
+                </select>
+            </div>
+            <div>
+                <label for="semester" style="font-weight: bold; font-size: 13px;">Semester:</label>
+                <select id="semester" name="semester" style="padding: 4px;">
+                    {% for s in range(1, 9) %}
+                        <option value="{{ s }}" {% if semester == s|string %}selected{% endif %}>Semester {{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="margin-top: 15px;">
+                <button type="submit" class="btn">Filter</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Top 10 Toppers Showcase Box -->
+    <h3>Top 10 Academic Toppers ({{ branch }} - Semester {{ semester }})</h3>
+    <div style="background-color: #fcfcfc; border: 1px solid #cccccc; padding: 12px; margin-bottom: 25px;">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 10%;">Rank</th>
+                    <th>Roll No</th>
+                    <th>Student Name</th>
+                    <th>Internal Marks %</th>
+                    <th>Attendance %</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in top_10 %}
+                    {% set s = item.student %}
+                    <tr style="{% if item.rank <= 3 %}background-color: #f0f7ff; font-weight: bold;{% endif %}">
+                        <td>
+                            {% if item.rank == 1 %}
+                                <span style="color: #d4af37;">&#9733; 1st</span>
+                            {% elif item.rank == 2 %}
+                                <span style="color: #999999;">&#9733; 2nd</span>
+                            {% elif item.rank == 3 %}
+                                <span style="color: #cd7f32;">&#9733; 3rd</span>
+                            {% else %}
+                                Rank {{ item.rank }}
+                            {% endif %}
+                        </td>
+                        <td>{{ s.roll_no }}</td>
+                        <td>{{ s.name }}</td>
+                        <td><strong style="color: #28a745;">{{ item.internal_pct }}%</strong></td>
+                        <td>{{ item.attendance_pct }}%</td>
+                        <td>
+                            <a href="{{ url_for('student.student_detail', student_id=s.id) }}" class="btn" style="padding: 2px 7px; font-size: 12px;">View</a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">No students found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Complete Class Rankings with 10-per-page pagination -->
+    <h3>Complete Class Standings</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Roll No</th>
+                <th>Student Name</th>
+                <th>Branch & Semester</th>
+                <th>Internal Marks %</th>
+                <th>Attendance %</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in records %}
+                {% set s = item.student %}
+                <tr>
+                    <td><strong>Rank {{ item.rank }}</strong></td>
+                    <td>{{ s.roll_no }}</td>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.branch }} - Sem {{ s.semester }}</td>
+                    <td>{{ item.internal_pct }}%</td>
+                    <td>{{ item.attendance_pct }}%</td>
+                    <td>
+                        <a href="{{ url_for('student.student_detail', student_id=s.id) }}" class="btn" style="padding: 2px 7px; font-size: 12px;">View</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+        <div>Page {{ page }} of {{ total_pages }} (Total {{ total_count }} students)</div>
+        <div class="pagination-links">
+            {% if page > 1 %}
+                <a href="{{ url_for('student.class_ranking', page=page-1, branch=branch, semester=semester) }}" class="btn btn-secondary">&laquo; Previous</a>
+            {% endif %}
+            {% for p in range(1, total_pages + 1) %}
+                {% if p == page %}
+                    <span class="btn btn-secondary" style="background-color: #2c3e50;">{{ p }}</span>
+                {% elif p <= 3 or p >= total_pages - 1 or (p >= page - 1 and p <= page + 1) %}
+                    <a href="{{ url_for('student.class_ranking', page=p, branch=branch, semester=semester) }}" class="btn btn-secondary">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page < total_pages %}
+                <a href="{{ url_for('student.class_ranking', page=page+1, branch=branch, semester=semester) }}" class="btn btn-secondary">Next &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+

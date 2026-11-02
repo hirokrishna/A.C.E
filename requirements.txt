@@ -1,0 +1,11 @@
+flask
+flask-sqlalchemy
+flask-wtf
+psycopg2-binary
+pandas
+numpy
+scikit-learn
+joblib
+python-dotenv
+gunicorn
+

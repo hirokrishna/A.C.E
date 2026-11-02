@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}My Student Dashboard{% endblock %}
+
+{% block content %}
+    <h2>My Academic Dashboard: {{ student.name }} ({{ student.roll_no }})</h2>
+
+    <!-- Navigation / Quick Actions -->
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('academic.target_calculator', student_id=student.id) }}" class="btn">Target Calculator</a>
+        <a href="{{ url_for('predict.student_history_own') }}" class="btn">Prediction History</a>
+        <a href="{{ url_for('student.student_report', student_id=student.id) }}" class="btn btn-secondary" target="_blank">Print My Report</a>
+        <a href="{{ url_for('student.student_profile') }}" class="btn btn-secondary">Edit Profile</a>
+        <a href="{{ url_for('auth.change_password') }}" class="btn btn-secondary">Change Password</a>
+    </div>
+
+    <!-- Latest Prediction Box at the top -->
+    {% if latest_prediction %}
+        <div class="box" style="background-color: #fafafa; border: 1px solid #bbbbbb; margin-bottom: 25px;">
+            <h3 style="margin-top: 0;">Performance Prediction & Advisory</h3>
+            
+            <p><strong>Predicted Outcome:</strong> 
+                {% if latest_prediction.result == 'PASS' %}
+                    <span style="color: green; font-weight: bold; font-size: 16px;">PASS</span>
+                {% else %}
+                    <span style="color: red; font-weight: bold; font-size: 16px;">FAIL</span>
+                {% endif %}
+            </p>
+
+            <p><strong>Pass Probability:</strong> {{ (latest_prediction.pass_probability * 100)|round(1) }} %</p>
+            <p><strong>Predicted Final Score:</strong> {{ latest_prediction.predicted_percentage ~ '%' if latest_prediction.predicted_percentage is not none else '-' }}</p>
+            <p><strong>Predicted Grade:</strong> <strong>{{ latest_prediction.predicted_grade if latest_prediction.predicted_grade else '-' }}</strong></p>
+            <p><strong>Risk Level:</strong> 
+                <span class="risk-{{ latest_prediction.risk_level.lower() }}">{{ latest_prediction.risk_level.upper() }}</span>
+            </p>
+
+            {% if latest_prediction.reasons %}
+                <p><strong>Identified Academic Factors:</strong></p>
+                <ul>
+                    {% for reason in latest_prediction.reasons.split(';') %}
+                        {% if reason.strip() %}
+                            <li>{{ reason.strip() }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if suggestions %}
+                <p><strong>Suggestions for Improvement:</strong></p>
+                <ul>
+                    {% for item in suggestions %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <p style="font-size: 12px; color: #777777; margin-bottom: 0;">
+                Calculated on: {{ latest_prediction.created_at.strftime('%Y-%m-%d %H:%M') }}
+            </p>
+        </div>
+    {% else %}
+        <div class="alert alert-info" style="background-color: #e2e3e5; border-color: #d6d8db; color: #383d41;">
+            Your academic prediction has not been evaluated yet. Please consult your instructor.
+        </div>
+    {% endif %}
+
+    <!-- Announcements for Student -->
+    {% if announcements %}
+        <h3>Campus & Department Announcements</h3>
+        {% for a in announcements %}
+            <div style="background-color: #fcfcfc; border: 1px solid #dddddd; padding: 12px; margin-bottom: 10px;">
+                <h4 style="margin: 0 0 5px 0; color: #2c3e50;">{{ a.title }}</h4>
+                <p style="margin: 0 0 6px 0; font-size: 13px;">{{ a.message }}</p>
+                <div style="font-size: 11px; color: #888888;">
+                    Posted by {{ a.poster.name if a.poster else 'Faculty' }} on {{ a.created_at.strftime('%Y-%m-%d %H:%M') }}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Student Info Summary & Class Rank -->
+    <h3>Profile Information</h3>
+    <table>
+        <tr>
+            <th style="width: 25%;">Roll Number</th>
+            <td style="width: 25%;"><strong>{{ student.roll_no }}</strong></td>
+            <th style="width: 25%;">Branch & Semester</th>
+            <td style="width: 25%;">{{ student.branch }} - Semester {{ student.semester }}</td>
+        </tr>
+        <tr>
+            <th>Class Standing / Rank</th>
+            <td><strong style="color: #2c3e50;">Rank {{ rank }} of {{ total_classmates }}</strong></td>
+            <th>Assigned Mentor</th>
+            <td>{{ student.mentor.name if student.mentor else 'Not Assigned' }}</td>
+        </tr>
+        <tr>
+            <th>Overall Attendance</th>
+            <td>
+                {% if overall_attendance < 75.0 %}
+                    <span class="risk-high">{{ overall_attendance }}%</span>
+                {% else %}
+                    <span class="risk-low">{{ overall_attendance }}%</span>
+                {% endif %}
+            </td>
+            <th>Internal Marks Average</th>
+            <td>{{ overall_internal }}%</td>
+        </tr>
+        <tr>
+            <th>Weekly Study Hours</th>
+            <td>{{ details.study_hours if details else 0 }} hrs</td>
+            <th>Active Backlogs</th>
+            <td>{{ details.backlogs if details else 0 }}</td>
+        </tr>
+    </table>
+
+    <!-- Subject-Wise Status Analysis -->
+    <h3>Subject-Wise Performance Analysis</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
+                <th>Internal Marks %</th>
+                <th>Attendance %</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in subject_analysis %}
+                <tr>
+                    <td><strong>{{ item.subject_code }}</strong></td>
+                    <td>{{ item.subject_name }}</td>
+                    <td>{{ item.marks_pct }}%</td>
+                    <td>{{ item.attendance_pct }}%</td>
+                    <td><strong style="color: {{ item.color }};">{{ item.status }}</strong></td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="5">No subject data recorded.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if weak_subjects %}
+        <div class="alert alert-danger" style="margin-top: 10px;">
+            <strong>Subjects Needing Attention:</strong> {{ weak_subjects|join(', ') }}. We advise attending coaching and doubt sessions.
+        </div>
+    {% endif %}
+
+    <!-- Mentoring & Teacher Remarks -->
+    {% if remarks %}
+        <h3>Teacher Guidance & Mentoring Remarks</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Teacher</th>
+                    <th>Remark</th>
+                    <th>Action Plan</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in remarks %}
+                    <tr>
+                        <td style="font-size: 12px;">{{ r.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ r.teacher.name if r.teacher else 'Teacher' }}</td>
+                        <td>{{ r.remark_text }}</td>
+                        <td>{{ r.action_plan or '-' }}</td>
+                        <td><strong>{{ r.status }}</strong></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <!-- Marks Table -->
+    <h3>My Exam Marks</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
+                <th>Mid 1 (25)</th>
+                <th>Mid 2 (25)</th>
+                <th>Assignment (20)</th>
+                <th>Final (100)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in subjects %}
+                <tr>
+                    <td><strong>{{ sub.code }}</strong></td>
+                    <td>{{ sub.name }}</td>
+                    <td>{{ student_marks.get(sub.id, {}).get('mid1', '-') }}</td>
+                    <td>{{ student_marks.get(sub.id, {}).get('mid2', '-') }}</td>
+                    <td>{{ student_marks.get(sub.id, {}).get('assignment', '-') }}</td>
+                    <td>{{ student_marks.get(sub.id, {}).get('final', '-') }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6">No marks published yet.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Attendance Table -->
+    <h3>My Attendance</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
+                <th>Classes Conducted</th>
+                <th>Classes Attended</th>
+                <th>Attendance %</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in subjects %}
+                {% set att = attendance_dict.get(sub.id, {'total': 0, 'attended': 0, 'pct': 0.0}) %}
+                <tr>
+                    <td><strong>{{ sub.code }}</strong></td>
+                    <td>{{ sub.name }}</td>
+                    <td>{{ att.total }}</td>
+                    <td>{{ att.attended }}</td>
+                    <td>
+                        {% if att.pct < 75.0 %}
+                            <span class="risk-high">{{ att.pct }}%</span>
+                        {% else %}
+                            <span class="risk-low">{{ att.pct }}%</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="5">No attendance records found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Enter Attendance - {{ student.name }}{% endblock %}
+
+{% block content %}
+    <h2>Enter Attendance: {{ student.name }} ({{ student.roll_no }})</h2>
+    <p>Enter the total number of classes conducted and the number attended by the student.</p>
+
+    <form method="POST">
+        <table>
+            <thead>
+                <tr>
+                    <th>Subject Code</th>
+                    <th>Subject Name</th>
+                    <th>Total Classes</th>
+                    <th>Attended Classes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in subjects %}
+                    {% set a = att_dict.get(sub.id, {'total': 40, 'attended': 0}) %}
+                    <tr>
+                        <td><strong>{{ sub.code }}</strong></td>
+                        <td>{{ sub.name }}</td>
+                        <td>
+                            <input type="number" min="0" name="total_{{ sub.id }}" value="{{ a.total }}" required style="width: 90px; padding: 4px;">
+                        </td>
+                        <td>
+                            <input type="number" min="0" name="attended_{{ sub.id }}" value="{{ a.attended }}" required style="width: 90px; padding: 4px;">
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn">Save Attendance</button>
+            <a href="{{ url_for('student.student_detail', student_id=student.id) }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+{% endblock %}
+

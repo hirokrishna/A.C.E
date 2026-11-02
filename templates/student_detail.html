@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}Student Details - {{ student.name }}{% endblock %}
+
+{% block extra_head %}
+    <!-- Chart.js via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+    <h2>Student Details: {{ student.name }} ({{ student.roll_no }})</h2>
+
+    <!-- Actions Bar -->
+    <div style="margin-bottom: 20px;">
+        {% if session.get('role') in ['admin', 'teacher'] %}
+            <a href="{{ url_for('academic.enter_marks', student_id=student.id) }}" class="btn">Enter Marks</a>
+            <a href="{{ url_for('academic.enter_attendance', student_id=student.id) }}" class="btn">Enter Attendance</a>
+            <a href="{{ url_for('academic.extra_details', student_id=student.id) }}" class="btn">Extra Details</a>
+            <a href="{{ url_for('academic.semester_results_page', student_id=student.id) }}" class="btn">Semester Results</a>
+            <a href="{{ url_for('academic.target_calculator', student_id=student.id) }}" class="btn">Target Calculator</a>
+            <a href="{{ url_for('student.student_report', student_id=student.id) }}" class="btn btn-secondary" target="_blank">Print Report</a>
+            <form method="POST" action="{{ url_for('predict.predict_one', student_id=student.id) }}" style="display:inline;">
+                <button type="submit" class="btn" style="background-color: #28a745; border-color: #218838;">Run Prediction</button>
+            </form>
+            <a href="{{ url_for('predict.student_history', student_id=student.id) }}" class="btn btn-secondary">History</a>
+            <a href="{{ url_for('student.edit_student', student_id=student.id) }}" class="btn btn-secondary">Edit Info</a>
+        {% else %}
+            <a href="{{ url_for('academic.target_calculator', student_id=student.id) }}" class="btn">Target Calculator</a>
+            <a href="{{ url_for('student.student_report', student_id=student.id) }}" class="btn btn-secondary" target="_blank">Print My Report</a>
+            <a href="{{ url_for('predict.student_history_own') }}" class="btn btn-secondary">My Prediction History</a>
+        {% endif %}
+    </div>
+
+    <!-- Top Info Table -->
+    <table>
+        <tr>
+            <th style="width: 20%;">Roll Number</th>
+            <td style="width: 30%;"><strong>{{ student.roll_no }}</strong></td>
+            <th style="width: 20%;">Full Name</th>
+            <td style="width: 30%;">{{ student.name }}</td>
+        </tr>
+        <tr>
+            <th>Branch & Semester</th>
+            <td>{{ student.branch }} - Semester {{ student.semester }} (Section {{ student.section or 'A' }})</td>
+            <th>Class Rank</th>
+            <td><strong style="color: #2c3e50;">Rank {{ rank }} of {{ total_classmates }}</strong></td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>{{ student.email or 'N/A' }}</td>
+            <th>Phone</th>
+            <td>{{ student.phone or 'N/A' }}</td>
+        </tr>
+        <tr>
+            <th>Overall Attendance</th>
+            <td>
+                {% if overall_attendance < 75.0 %}
+                    <span class="risk-high">{{ overall_attendance }}%</span>
+                {% else %}
+                    <strong>{{ overall_attendance }}%</strong>
+                {% endif %}
+            </td>
+            <th>Internal Marks Avg</th>
+            <td><strong>{{ overall_internal }}%</strong></td>
+        </tr>
+        <tr>
+            <th>Faculty Mentor</th>
+            <td colspan="3">
+                {% if student.mentor %}
+                    <strong>{{ student.mentor.name }}</strong> ({{ student.mentor.email }})
+                {% else %}
+                    <span style="color: #888888;">Not Assigned</span>
+                {% endif %}
+
+                {% if session.get('role') == 'admin' %}
+                    <form method="POST" action="{{ url_for('student.assign_mentor', student_id=student.id) }}" style="display:inline; margin-left: 15px;">
+                        <select name="mentor_id" style="padding: 2px 4px; font-size: 12px;">
+                            <option value="">-- Change Mentor --</option>
+                            {% for t in teachers %}
+                                <option value="{{ t.id }}" {% if student.mentor_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn" style="padding: 2px 6px; font-size: 11px;">Save</button>
+                    </form>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <!-- Latest Prediction Box -->
+    {% if latest_prediction %}
+        <div class="box" style="background-color: #fcfcfc; border: 1px solid #bbbbbb; margin-top: 15px;">
+            <h3 style="margin-top: 0;">Latest Prediction Result</h3>
+            <p><strong>Result:</strong> 
+                {% if latest_prediction.result == 'PASS' %}
+                    <span style="color: green; font-weight: bold;">PASS</span>
+                {% else %}
+                    <span style="color: red; font-weight: bold;">FAIL</span>
+                {% endif %}
+            </p>
+            <p><strong>Pass Probability:</strong> {{ (latest_prediction.pass_probability * 100)|round(1) }} %</p>
+            <p><strong>Predicted Final Score:</strong> {{ latest_prediction.predicted_percentage ~ '%' if latest_prediction.predicted_percentage is not none else '-' }}</p>
+            <p><strong>Predicted Grade:</strong> <strong>{{ latest_prediction.predicted_grade if latest_prediction.predicted_grade else '-' }}</strong></p>
+            <p><strong>Risk Level:</strong> 
+                <span class="risk-{{ latest_prediction.risk_level.lower() }}">{{ latest_prediction.risk_level.upper() }}</span>
+            </p>
+
+            {% if latest_prediction.reasons %}
+                <p><strong>Reasons:</strong></p>
+                <ul>
+                    {% for reason in latest_prediction.reasons.split(';') %}
+                        {% if reason.strip() %}
+                            <li>{{ reason.strip() }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <p style="font-size: 12px; color: #777777;">Predicted on: {{ latest_prediction.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+        </div>
+    {% endif %}
+
+    <!-- Subject-Wise Status Analysis Block -->
+    <h3>Subject-Wise Performance Analysis</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Subject Name</th>
+                <th>Internal Marks %</th>
+                <th>Attendance %</th>
+                <th>Academic Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in subject_analysis %}
+                <tr>
+                    <td><strong>{{ item.subject_code }}</strong></td>
+                    <td>{{ item.subject_name }}</td>
+                    <td>{{ item.marks_pct }}%</td>
+                    <td>{{ item.attendance_pct }}%</td>
+                    <td><strong style="color: {{ item.color }};">{{ item.status }}</strong></td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="5">No subjects recorded.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if weak_subjects %}
+        <div class="alert alert-danger" style="margin-top: 10px;">
+            <strong>Weak Subjects Needing Immediate Intervention:</strong> {{ weak_subjects|join(', ') }}
+        </div>
+    {% endif %}
+
+    <!-- Semester Results Table & SGPA Trend Line Chart -->
+    <h3>Past Semester Results (SGPA & Backlogs)</h3>
+    {% if sem_results %}
+        <table>
+            <thead>
+                <tr>
+                    {% for r in sem_results %}
+                        <th>Semester {{ r.semester }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    {% for r in sem_results %}
+                        <td>SGPA: <strong>{{ r.sgpa }}</strong> ({{ r.backlogs }} backlogs)</td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    {% else %}
+        <p>No past semester results added yet. <a href="{{ url_for('academic.semester_results_page', student_id=student.id) }}">Add semester results</a></p>
+    {% endif %}
+
+    <!-- Prediction Trend & SGPA Charts side-by-side -->
+    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; margin-bottom: 25px;">
+        <div style="flex: 1; min-width: 320px; background-color: #fafafa; border: 1px solid #dddddd; padding: 12px;">
+            <h4 style="margin-top: 0; text-align: center;">SGPA Progression Over Semesters</h4>
+            <canvas id="sgpaChart"></canvas>
+        </div>
+        <div style="flex: 1; min-width: 320px; background-color: #fafafa; border: 1px solid #dddddd; padding: 12px;">
+            <h4 style="margin-top: 0; text-align: center;">Prediction Probability Trend</h4>
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Marks Table -->
+    <h3>Exam Marks by Subject</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
+                <th>Mid 1 (25)</th>
+                <th>Mid 2 (25)</th>
+                <th>Assignment (20)</th>
+                <th>Final (100)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in subjects %}
+                <tr>
+                    <td><strong>{{ sub.code }}</strong></td>
+                    <td>{{ sub.name }}</td>
+                    <td>{{ student_marks.get(sub.id, {}).get('mid1', '-') }}</td>
+                    <td>{{ student_marks.get(sub.id, {}).get('mid2', '-') }}</td>
+                    <td>{{ student_marks.get(sub.id, {}).get('assignment', '-') }}</td>
+                    <td>{{ student_marks.get(sub.id, {}).get('final', '-') }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6">No marks found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Teacher Remarks & Action Plans -->
+    <h3>Mentoring & Faculty Remarks</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Faculty</th>
+                <th>Remark</th>
+                <th>Action Plan</th>
+                <th>Status</th>
+                <th>Visible to Student</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in remarks_list %}
+                <tr>
+                    <td style="font-size: 12px;">{{ r.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ r.teacher.name if r.teacher else 'Teacher' }}</td>
+                    <td>{{ r.remark_text }}</td>
+                    <td>{{ r.action_plan or '-' }}</td>
+                    <td><strong>{{ r.status }}</strong></td>
+                    <td>{{ 'Yes' if r.visible_to_student else 'No (Internal)' }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6">No remarks recorded yet.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Add Remark Form for Teacher/Admin -->
+    {% if session.get('role') in ['admin', 'teacher'] %}
+        <div style="background-color: #f9f9f9; padding: 15px; border: 1px solid #e0e0e0; margin-top: 15px;">
+            <h4 style="margin-top: 0;">Add Teacher Remark & Action Plan</h4>
+            <form method="POST" action="{{ url_for('student.add_remark', student_id=student.id) }}">
+                <div class="form-group">
+                    <label for="remark_text">Faculty Remark:</label>
+                    <textarea id="remark_text" name="remark_text" rows="2" required placeholder="Observations regarding attendance, test performance, or behavior..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="action_plan">Action Plan / Recommendations:</label>
+                    <textarea id="action_plan" name="action_plan" rows="2" placeholder="e.g. Remedial classes, weekly parent call, peer study group..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="status">Intervention Status:</label>
+                    <select id="status" name="status">
+                        <option value="Not Contacted">Not Contacted</option>
+                        <option value="Counselled">Counselled</option>
+                        <option value="Improving">Improving</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="visible_to_student" value="1"> 
+                        Make visible on student's dashboard
+                    </label>
+                </div>
+                <button type="submit" class="btn">Save Remark</button>
+            </form>
+        </div>
+    {% endif %}
+
+    <div style="margin-top: 25px;">
+        {% if session.get('role') in ['admin', 'teacher'] %}
+            <a href="{{ url_for('student.student_list') }}" class="btn btn-secondary">&laquo; Back to Students List</a>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. SGPA Chart
+    var semLabels = [];
+    var semData = [];
+    {% for r in sem_results %}
+        semLabels.push("Sem {{ r.semester }}");
+        semData.push({{ r.sgpa }});
+    {% endfor %}
+
+    var sgpaCanvas = document.getElementById("sgpaChart");
+    if (sgpaCanvas && semLabels.length > 0) {
+        new Chart(sgpaCanvas, {
+            type: "line",
+            data: {
+                labels: semLabels,
+                datasets: [{
+                    label: "SGPA (0 - 10)",
+                    data: semData,
+                    borderColor: "#3366cc",
+                    backgroundColor: "rgba(51, 102, 204, 0.1)",
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 10
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Trend API Chart
+    var trendCanvas = document.getElementById("trendChart");
+    if (trendCanvas) {
+        fetch("/api/student/{{ student.id }}/trend")
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.dates.length > 0) {
+                    new Chart(trendCanvas, {
+                        type: "line",
+                        data: {
+                            labels: data.dates,
+                            datasets: [{
+                                label: "Pass Probability %",
+                                data: data.probabilities,
+                                borderColor: "#28a745",
+                                backgroundColor: "rgba(40, 167, 69, 0.1)",
+                                fill: true,
+                                tension: 0.1
+                            }, {
+                                label: "Predicted Final %",
+                                data: data.percentages,
+                                borderColor: "#fd7e14",
+                                borderDash: [5, 5],
+                                fill: false,
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    min: 0,
+                                    max: 100
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    trendCanvas.parentElement.innerHTML += "<p style='text-align:center;color:#888;font-size:12px;'>No prediction history yet</p>";
+                }
+            });
+    }
+});
+</script>
+{% endblock %}

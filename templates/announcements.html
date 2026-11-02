@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Department & Campus Announcements{% endblock %}
+
+{% block content %}
+    <h2>Campus & Department Announcements</h2>
+
+    <!-- Post Announcement Form -->
+    <div style="background-color: #fafafa; border: 1px solid #cccccc; padding: 15px; margin-bottom: 25px;">
+        <h3 style="margin-top: 0;">Post New Announcement</h3>
+        <form method="POST" action="{{ url_for('dashboard.announcements') }}">
+            <div class="form-group">
+                <label for="title">Announcement Title:</label>
+                <input type="text" id="title" name="title" required placeholder="e.g. Schedule for Remedial Coaching">
+            </div>
+
+            <div class="form-group">
+                <label for="message">Detailed Announcement Message:</label>
+                <textarea id="message" name="message" rows="3" required placeholder="Write your message here..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div class="form-group" style="flex: 1;">
+                    <label for="target_branch">Target Branch (Optional):</label>
+                    <select id="target_branch" name="target_branch">
+                        <option value="">All Branches</option>
+                        <option value="IT">IT</option>
+                        <option value="CSE">CSE</option>
+                        <option value="ECE">ECE</option>
+                        <option value="MECH">MECH</option>
+                        <option value="CIVIL">CIVIL</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="target_semester">Target Semester (Optional):</label>
+                    <select id="target_semester" name="target_semester">
+                        <option value="">All Semesters</option>
+                        {% for s in range(1, 9) %}
+                            <option value="{{ s }}">Semester {{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn">Publish Announcement</button>
+        </form>
+    </div>
+
+    <!-- Announcements List -->
+    <h3>Published Announcements</h3>
+    {% for a in announcements %}
+        <div style="background-color: #ffffff; border: 1px solid #dddddd; padding: 15px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0; color: #2c3e50;">{{ a.title }}</h4>
+                    <p style="margin: 0 0 8px 0; font-size: 13px;">{{ a.message }}</p>
+                    <div style="font-size: 11px; color: #777777;">
+                        Posted by: <strong>{{ a.poster.name if a.poster else 'Faculty' }}</strong> | 
+                        Audience: {{ a.target_branch or 'All Branches' }} ({{ 'Sem ' ~ a.target_semester if a.target_semester else 'All Semesters' }}) | 
+                        {{ a.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                </div>
+                {% if session.get('role') == 'admin' or a.posted_by == session.get('user_id') %}
+                    <form method="POST" action="{{ url_for('dashboard.delete_announcement', ann_id=a.id) }}" onsubmit="return confirm('Delete this announcement?');">
+                        <button type="submit" class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;">Delete</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <p>No announcements posted yet.</p>
+    {% endfor %}
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+        <div style="margin-top: 15px;">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('dashboard.announcements', page=pagination.prev_num) }}" class="btn btn-secondary">&laquo; Previous</a>
+            {% endif %}
+            <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+            {% if pagination.has_next %}
+                <a href="{{ url_for('dashboard.announcements', page=pagination.next_num) }}" class="btn btn-secondary">Next &raquo;</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}
+

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}My Notifications - A.C.E{% endblock %}
+
+{% block content %}
+    <h2>My Notifications</h2>
+
+    <div style="margin-bottom: 15px;">
+        <form method="POST" action="{{ url_for('auth.read_all_notifications') }}" style="display: inline;">
+            <button type="submit" class="btn btn-secondary">Mark All as Read</button>
+        </form>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 20%;">Date & Time</th>
+                <th>Notification Message</th>
+                <th style="width: 15%;">Status</th>
+                <th style="width: 15%;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for n in notifications %}
+                <tr style="{% if not n.is_read %}background-color: #f0f7ff; font-weight: bold;{% endif %}">
+                    <td style="font-size: 12px;">{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        {{ n.message }}
+                    </td>
+                    <td>
+                        {% if not n.is_read %}
+                            <span class="badge">UNREAD</span>
+                        {% else %}
+                            <span style="color: #888888; font-size: 12px;">Read</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if n.link %}
+                            <a href="{{ url_for('auth.open_notification', notif_id=n.id) }}" class="btn" style="padding: 2px 7px; font-size: 12px;">Open Link</a>
+                        {% else %}
+                            <a href="{{ url_for('auth.open_notification', notif_id=n.id) }}" class="btn btn-secondary" style="padding: 2px 7px; font-size: 12px;">Mark Read</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="4">No notifications found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+        <div style="margin-top: 15px;">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('auth.notification_list', page=pagination.prev_num) }}" class="btn btn-secondary">&laquo; Previous</a>
+            {% endif %}
+            <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+            {% if pagination.has_next %}
+                <a href="{{ url_for('auth.notification_list', page=pagination.next_num) }}" class="btn btn-secondary">Next &raquo;</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}
+

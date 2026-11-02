@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}My Assigned Mentee Students{% endblock %}
+
+{% block content %}
+    <h2>My Mentee Students</h2>
+    <p>Students assigned to you for academic mentoring. Track their attendance, risk levels, and advisory remarks.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Roll No</th>
+                <th>Student Name</th>
+                <th>Branch / Sem</th>
+                <th>Attendance %</th>
+                <th>Internal Marks %</th>
+                <th>Predicted Outcome</th>
+                <th>Risk Level</th>
+                <th>Latest Remark Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in records %}
+                {% set s = item.student %}
+                {% set p = item.prediction %}
+                {% set r = item.remark %}
+                <tr>
+                    <td><strong>{{ s.roll_no }}</strong></td>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.branch }} - Sem {{ s.semester }}</td>
+                    <td>
+                        {% if item.attendance_pct < 75.0 %}
+                            <span class="risk-high">{{ item.attendance_pct }}%</span>
+                        {% else %}
+                            {{ item.attendance_pct }}%
+                        {% endif %}
+                    </td>
+                    <td>{{ item.internal_pct }}%</td>
+                    <td>
+                        {% if p %}
+                            <strong>{{ p.result }}</strong> ({{ (p.pass_probability * 100)|round(1) }}%)
+                        {% else %}
+                            <span style="color: #888;">Not Run</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if p %}
+                            <span class="risk-{{ p.risk_level.lower() }}">{{ p.risk_level.upper() }}</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if r %}
+                            <strong>{{ r.status }}</strong>
+                        {% else %}
+                            <span style="color: #888;">No Remarks</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('student.student_detail', student_id=s.id) }}" class="btn" style="padding: 2px 7px; font-size: 12px;">View</a>
+                        <a href="{{ url_for('academic.target_calculator', student_id=s.id) }}" class="btn btn-secondary" style="padding: 2px 7px; font-size: 12px;">Target</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="9">No students currently assigned to you as mentor.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+

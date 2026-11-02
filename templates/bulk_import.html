@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk CSV Import - A.C.E{% endblock %}
+
+{% block content %}
+    <h2>Bulk Data Import (CSV)</h2>
+    <p>Upload comma-separated values (CSV) files to bulk import student profiles or exam marks.</p>
+
+    <!-- Error list if errors occurred -->
+    {% if errors %}
+        <div class="alert alert-danger">
+            <strong>Errors encountered during import:</strong>
+            <ul style="margin: 5px 0 0 15px; padding: 0;">
+                {% for err in errors %}
+                    <li>{{ err }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div style="display: flex; gap: 25px; flex-wrap: wrap;">
+        <!-- 1. Students Import Form -->
+        <div style="flex: 1; min-width: 340px; background-color: #fafafa; border: 1px solid #cccccc; padding: 15px;">
+            <h3 style="margin-top: 0;">1. Import Students CSV</h3>
+            <p style="font-size: 13px; color: #555555;">
+                Exact required header columns:<br>
+                <code>roll_no,name,email,branch,semester,section,gender</code>
+            </p>
+            <div style="background-color: #ffffff; border: 1px dashed #cccccc; padding: 8px; font-size: 11px; margin-bottom: 12px;">
+                <strong>Sample Row:</strong><br>
+                <code>IT2026040,Kavya Nair,kavya@college.com,IT,5,A,Female</code>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="import_type" value="students">
+                <div class="form-group">
+                    <label for="students_file">Select Students CSV File:</label>
+                    <input type="file" id="students_file" name="csv_file" accept=".csv" required>
+                </div>
+                <button type="submit" class="btn">Upload & Import Students</button>
+            </form>
+        </div>
+
+        <!-- 2. Marks Import Form -->
+        <div style="flex: 1; min-width: 340px; background-color: #fafafa; border: 1px solid #cccccc; padding: 15px;">
+            <h3 style="margin-top: 0;">2. Import Marks CSV</h3>
+            <p style="font-size: 13px; color: #555555;">
+                Exact required header columns:<br>
+                <code>roll_no,subject_code,exam_type,marks_obtained,max_marks</code>
+            </p>
+            <div style="background-color: #ffffff; border: 1px dashed #cccccc; padding: 8px; font-size: 11px; margin-bottom: 12px;">
+                <strong>Sample Row:</strong><br>
+                <code>IT2026001,IT501,mid1,21.5,25.0</code>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="import_type" value="marks">
+                <div class="form-group">
+                    <label for="marks_file">Select Marks CSV File:</label>
+                    <input type="file" id="marks_file" name="csv_file" accept=".csv" required>
+                </div>
+                <button type="submit" class="btn">Upload & Import Marks</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Add User - Admin{% endblock %}
+
+{% block content %}
+    <h2>Add New User</h2>
+
+    <form method="POST" action="{{ url_for('admin.add_user') }}">
+        <div class="form-group">
+            <label for="name">Full Name:</label>
+            <input type="text" id="name" name="name" value="{{ name or '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email Address:</label>
+            <input type="email" id="email" name="email" value="{{ email or '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="role">Role:</label>
+            <select id="role" name="role" required>
+                <option value="teacher" {% if role == 'teacher' %}selected{% endif %}>Teacher</option>
+                <option value="admin" {% if role == 'admin' %}selected{% endif %}>Admin</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Initial Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn">Save User</button>
+            <a href="{{ url_for('admin.user_list') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+{% endblock %}
+

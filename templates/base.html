@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}A.C.E{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <div class="navbar">
+        <div class="nav-container">
+            <a href="/" class="brand">A.C.E</a>
+            <div class="nav-links">
+                {% if session.get('user_id') %}
+                    {% if session.get('role') == 'admin' %}
+                        <a href="{{ url_for('dashboard.dashboard_home') }}">Dashboard</a>
+                        <a href="{{ url_for('student.student_list') }}">Students</a>
+                        <a href="{{ url_for('dashboard.risk_list') }}">Risk List</a>
+                        <a href="{{ url_for('student.intervention_list') }}">Interventions</a>
+                        <a href="{{ url_for('student.class_ranking') }}">Ranking</a>
+                        <a href="{{ url_for('academic.attendance_shortage') }}">Shortage</a>
+                        <a href="{{ url_for('dashboard.announcements') }}">Announcements</a>
+                        <a href="{{ url_for('academic.bulk_import') }}">Import</a>
+                        <a href="{{ url_for('academic.subject_list') }}">Subjects</a>
+                        <a href="{{ url_for('admin.user_list') }}">Users</a>
+                        <a href="{{ url_for('admin.activity_log') }}">Activity</a>
+                        <a href="{{ url_for('admin.model_management') }}">Model</a>
+                        <a href="{{ url_for('predict.what_if_page') }}">What-If</a>
+                        <a href="{{ url_for('auth.notification_list') }}">Notifications ({{ unread_notif_count }})</a>
+                        <a href="{{ url_for('auth.logout') }}">Logout</a>
+                    {% elif session.get('role') == 'teacher' %}
+                        <a href="{{ url_for('dashboard.dashboard_home') }}">Dashboard</a>
+                        <a href="{{ url_for('student.student_list') }}">Students</a>
+                        <a href="{{ url_for('student.my_students') }}">My Students</a>
+                        <a href="{{ url_for('dashboard.risk_list') }}">Risk List</a>
+                        <a href="{{ url_for('student.intervention_list') }}">Interventions</a>
+                        <a href="{{ url_for('student.class_ranking') }}">Ranking</a>
+                        <a href="{{ url_for('academic.attendance_shortage') }}">Shortage</a>
+                        <a href="{{ url_for('dashboard.announcements') }}">Announcements</a>
+                        <a href="{{ url_for('academic.bulk_import') }}">Import</a>
+                        <a href="{{ url_for('predict.what_if_page') }}">What-If</a>
+                        <a href="{{ url_for('auth.notification_list') }}">Notifications ({{ unread_notif_count }})</a>
+                        <a href="{{ url_for('auth.logout') }}">Logout</a>
+                    {% elif session.get('role') == 'student' %}
+                        <a href="{{ url_for('dashboard.student_dashboard') }}">My Dashboard</a>
+                        <a href="{{ url_for('predict.student_history_own') }}">History</a>
+                        <a href="{{ url_for('student.student_profile') }}">Profile</a>
+                        <a href="{{ url_for('auth.notification_list') }}">Notifications ({{ unread_notif_count }})</a>
+                        <a href="{{ url_for('auth.change_password') }}">Change Password</a>
+                        <a href="{{ url_for('auth.logout') }}">Logout</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}">Login</a>
+                    <a href="{{ url_for('auth.register') }}">Register</a>
+                    <a href="{{ url_for('auth.forgot_password') }}">Forgot Password</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <div class="container">
+        <!-- Flash messages box -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Content Box -->
+        <div class="box">
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            A.C.E - College Project
+        </div>
+    </div>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

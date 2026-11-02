@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Register - A.C.E{% endblock %}
+
+{% block content %}
+    <h2>Student Registration</h2>
+    <p>Create an account to view your performance predictions.</p>
+
+    <form method="POST" action="{{ url_for('auth.register') }}">
+        <div class="form-group">
+            <label for="name">Student Name:</label>
+            <input type="text" id="name" name="name" value="{{ name or '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email Address:</label>
+            <input type="email" id="email" name="email" value="{{ email or '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="roll_no">Roll Number:</label>
+            <input type="text" id="roll_no" name="roll_no" value="{{ roll_no or '' }}" placeholder="e.g. IT2026001" required>
+        </div>
+
+        <div class="form-group">
+            <label for="branch">Branch:</label>
+            <select id="branch" name="branch" required>
+                <option value="IT" {% if branch == 'IT' %}selected{% endif %}>Information Technology</option>
+                <option value="CSE" {% if branch == 'CSE' %}selected{% endif %}>Computer Science Engineering</option>
+                <option value="ECE" {% if branch == 'ECE' %}selected{% endif %}>Electronics & Communication</option>
+                <option value="MECH" {% if branch == 'MECH' %}selected{% endif %}>Mechanical Engineering</option>
+                <option value="CIVIL" {% if branch == 'CIVIL' %}selected{% endif %}>Civil Engineering</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="semester">Semester:</label>
+            <select id="semester" name="semester" required>
+                {% for sem in range(1, 9) %}
+                    <option value="{{ sem }}" {% if semester == sem|string or (not semester and sem == 5) %}selected{% endif %}>Semester {{ sem }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password (at least 6 characters):</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+
+        <div class="form-group">
+            <label for="confirm_password">Confirm Password:</label>
+            <input type="password" id="confirm_password" name="confirm_password" required>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn">Register</button>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+
+    <p style="margin-top: 15px;">
+        Already registered? <a href="{{ url_for('auth.login') }}">Login here</a>
+    </p>
+{% endblock %}
+

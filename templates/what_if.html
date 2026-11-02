@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}What-If Analysis - A.C.E{% endblock %}
+
+{% block content %}
+    <h2>What-If Performance Simulator</h2>
+    <p>Test hypothetical scenarios and evaluate how changing study habits or attendance impacts a student's risk level. (Nothing is saved to the database).</p>
+
+    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+        <!-- Input Form -->
+        <div style="flex: 1; min-width: 320px;">
+            <form method="POST">
+                <div class="form-group">
+                    <label for="attendance_pct">Attendance Percentage (%):</label>
+                    <input type="number" step="0.1" min="0" max="100" id="attendance_pct" name="attendance_pct" value="{{ form_data.attendance_pct }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="internal_marks_pct">Internal Marks Average (%):</label>
+                    <input type="number" step="0.1" min="0" max="100" id="internal_marks_pct" name="internal_marks_pct" value="{{ form_data.internal_marks_pct }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="prev_percentage">Previous Semester Percentage (%):</label>
+                    <input type="number" step="0.1" min="0" max="100" id="prev_percentage" name="prev_percentage" value="{{ form_data.prev_percentage }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="study_hours">Study Hours Per Week (0 - 80):</label>
+                    <input type="number" step="0.5" min="0" max="80" id="study_hours" name="study_hours" value="{{ form_data.study_hours }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="assignment_pct">Assignment Completion (%):</label>
+                    <input type="number" step="0.1" min="0" max="100" id="assignment_pct" name="assignment_pct" value="{{ form_data.assignment_pct }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="backlogs">Active Backlogs:</label>
+                    <input type="number" min="0" max="20" id="backlogs" name="backlogs" value="{{ form_data.backlogs }}" required>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn">Simulate Prediction</button>
+                    <a href="{{ url_for('predict.what_if_page') }}" class="btn btn-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Simulation Result Card -->
+        <div style="flex: 1; min-width: 300px;">
+            {% if result %}
+                <div class="box" style="background-color: #fafafa; border: 1px solid #999999;">
+                    <h3 style="margin-top: 0;">Simulation Result</h3>
+                    
+                    <p style="font-size: 16px;">
+                        <strong>Predicted Outcome:</strong> 
+                        {% if result.result == 'PASS' %}
+                            <span style="color: green; font-weight: bold;">PASS</span>
+                        {% else %}
+                            <span style="color: red; font-weight: bold;">FAIL</span>
+                        {% endif %}
+                    </p>
+
+                    <p>
+                        <strong>Pass Probability:</strong> 
+                        {{ (result.pass_probability * 100)|round(1) }} %
+                    </p>
+
+                    <p>
+                        <strong>Predicted Score & Grade:</strong> 
+                        {{ result.predicted_percentage }}% (Grade: <strong>{{ result.predicted_grade }}</strong>)
+                    </p>
+
+                    <p>
+                        <strong>Risk Level:</strong> 
+                        <span class="risk-{{ result.risk_level.lower() }}">{{ result.risk_level.upper() }}</span>
+                    </p>
+
+                    <p><strong>Identified Factors:</strong></p>
+                    <ul>
+                        {% for r in result.reasons %}
+                            <li>{{ r }}</li>
+                        {% endfor %}
+                    </ul>
+
+                    <p><strong>Recommendations / Suggestions:</strong></p>
+                    <ul>
+                        {% for s in result.suggestions %}
+                            <li>{{ s }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% else %}
+                <div style="border: 1px dashed #cccccc; padding: 25px; text-align: center; color: #777777;">
+                    Enter values on the left and click <strong>Simulate Prediction</strong> to view pass probability and risk assessment.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+

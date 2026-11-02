@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users & Password Requests - Admin{% endblock %}
+
+{% block content %}
+    <h2>Manage Users & System Accounts</h2>
+
+    <div style="margin-bottom: 15px;">
+        <a href="{{ url_for('admin.add_user') }}" class="btn">+ Add User</a>
+    </div>
+
+    <!-- Pending Password Reset Requests -->
+    {% if pending_requests %}
+        <div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px; margin-bottom: 25px;">
+            <h3 style="margin-top: 0; color: #856404;">Pending Password Reset Requests ({{ pending_requests|length }})</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Requested At</th>
+                        <th>User Email</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in pending_requests %}
+                        <tr>
+                            <td>{{ req.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td><strong>{{ req.email }}</strong></td>
+                            <td><span class="badge" style="background-color: #ffc107; color: #000;">PENDING</span></td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.resolve_reset_request', req_id=req.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn" style="padding: 2px 8px; font-size: 12px;" onclick="return confirm('Generate temporary password (TempPass@2026) for {{ req.email }}?');">
+                                        Reset & Issue Temp Password
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <!-- Users Table -->
+    <h3>All System User Accounts</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td>{{ u.name }}</td>
+                    <td>{{ u.email }}</td>
+                    <td><strong>{{ u.role.upper() }}</strong></td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin.reset_password', user_id=u.id) }}" style="display:inline;" onsubmit="return confirm('Reset password for {{ u.name }} to default (Reset@123)?');">
+                            <button type="submit" class="btn" style="padding: 2px 7px; font-size: 12px;">Reset Password</button>
+                        </form>
+                        {% if u.id != session.get('user_id') %}
+                            <form method="POST" action="{{ url_for('admin.delete_user', user_id=u.id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete user {{ u.name }}?');">
+                                <button type="submit" class="btn btn-danger" style="padding: 2px 7px; font-size: 12px;">Delete</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="5">No records found</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

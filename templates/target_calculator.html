@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Target Final Exam Calculator - {{ student.name }}{% endblock %}
+
+{% block content %}
+    <h2>Target Final Exam Calculator: {{ student.name }} ({{ student.roll_no }})</h2>
+    <p>Calculate the score required in the final exam (60% weightage) based on current internal marks (40% weightage) to reach your target overall percentage.</p>
+
+    <div style="background-color: #fafafa; border: 1px solid #dddddd; padding: 15px; margin-bottom: 20px; max-width: 500px;">
+        <p><strong>Current Internal Marks Average:</strong> {{ internal_pct }}%</p>
+        <p><strong>Evaluation Formula:</strong> Final Score = (Target - 0.40 &times; Internal) / 0.60</p>
+
+        <form method="POST">
+            <div class="form-group">
+                <label for="target_pct">Desired Target Overall Percentage (%):</label>
+                <input type="number" step="0.5" min="0" max="100" id="target_pct" name="target_pct" value="{{ target_pct }}" required>
+            </div>
+            <button type="submit" class="btn">Calculate Required Marks</button>
+            {% if session.get('role') == 'student' %}
+                <a href="{{ url_for('dashboard.student_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+            {% else %}
+                <a href="{{ url_for('student.student_detail', student_id=student.id) }}" class="btn btn-secondary">Back to Student</a>
+            {% endif %}
+        </form>
+    </div>
+
+    {% if status_message %}
+        <div class="box" style="border: 1px solid #2952a3; background-color: #f0f7ff; max-width: 500px;">
+            <h3 style="margin-top: 0; color: #2c3e50;">Calculation Result</h3>
+            <p style="font-size: 15px;">{{ status_message }}</p>
+            {% if required_final is not none and required_final <= 100 and required_final > 0 %}
+                <p>Required Final Exam Score: <strong style="font-size: 18px; color: #3366cc;">{{ required_final }}%</strong> (Minimum {{ (required_final)|round(0)|int }} marks out of 100)</p>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}
+
