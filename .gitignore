@@ -16,9 +16,6 @@ instance/
 *.db
 *.sqlite3
 
-# Trained ML Models (users generate them with python ml/train_model.py)
-ml/*.pkl
-
 # OS files
 .DS_Store
 Thumbs.db

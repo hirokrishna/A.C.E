@@ -6,8 +6,19 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 # Initialize database
-from models import db
+from models import db, User
 db.init_app(app)
+
+# Auto-create tables and seed initial data if running on a fresh deployment (e.g. Render)
+with app.app_context():
+    try:
+        db.create_all()
+        if not User.query.first():
+            from seed import seed_database
+            seed_database()
+            print("Database automatically created and seeded.")
+    except Exception as e:
+        print("Startup database initialization notice:", e)
 
 # Register blueprints
 from routes.auth_routes import auth_bp
